@@ -2,13 +2,6 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
-extern char* __malloc_heap_start;
-
-extern "C"
-{
-    uint16_t codal_heap_start = &__malloc_heap_start;
-}
-
 void target_enable_irq()
 {
     sei();
