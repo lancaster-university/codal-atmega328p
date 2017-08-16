@@ -42,6 +42,10 @@ DEALINGS IN THE SOFTWARE.
 #include "MessageBus.h"
 #include "device_types.h"
 
+#include "ArduinoIO.h"
+#include "ATMegaTimer.h"
+#include "ATMegaSerial.h"
+
 namespace codal
 {
     /**
@@ -53,8 +57,6 @@ namespace codal
     class ArduinoUno : public CodalDevice
     {
         private:
-
-
 
         /**
           * A listener to perform actions as a result of Message Bus reflection.
@@ -68,6 +70,9 @@ namespace codal
 
         public:
 
+        ATMegaTimer                 timer;
+        ATMegaSerial                serial;
+        ArduinoIO                   io;
         MessageBus                  messageBus;
 
         /**

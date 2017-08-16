@@ -34,11 +34,16 @@ using namespace codal;
   * that represent various device drivers used to control aspects of the micro:bit.
   */
 ArduinoUno::ArduinoUno() :
+    timer(),
+    serial(),
+    io(),
     messageBus()
 {
-
     // Clear our status
     status = 0;
+
+    // Start our system timer running.
+    timer.start();
 
     // Bring up fiber scheduler.
     scheduler_init(messageBus);
