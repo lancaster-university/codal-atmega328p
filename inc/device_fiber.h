@@ -56,13 +56,15 @@ inline void tcb_configure_sp(PROCESSOR_TCB* tcb, PROCESSOR_WORD_TYPE sp)
 
 inline void tcb_configure_stack_base(PROCESSOR_TCB* tcb, PROCESSOR_WORD_TYPE stack_base)
 {
-    tcb->SPHI = codal::high(stack_base);
-    tcb->SPLO = codal::low(stack_base);
+    //tcb->SPHI = codal::high(stack_base);
+    //tcb->SPLO = codal::low(stack_base);
 }
 
 inline PROCESSOR_WORD_TYPE tcb_get_stack_base(PROCESSOR_TCB* tcb)
 {
-    return tcb->SPHI << 8 | tcb->SPLO;
+    //return tcb->SPHI << 8 | tcb->SPLO;
+    return fiber_initial_stack_base();
+
 }
 
 inline PROCESSOR_WORD_TYPE get_current_sp()
