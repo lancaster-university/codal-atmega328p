@@ -10,7 +10,7 @@ typedef enum {
     PullDown = 1,
     PullNone = 2,
     OpenDrain = 3,
-    PullDefault = PullDown
+    PullDefault = PullNone
 } PinMode;
 
 typedef uint8_t PinName;
