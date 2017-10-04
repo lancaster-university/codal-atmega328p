@@ -1,6 +1,8 @@
 #include "codal_target_hal.h"
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include <avr/wdt.h>
+#include "ATMegaSerial.h"
 
 void target_enable_irq()
 {
@@ -27,10 +29,19 @@ void target_wait(uint32_t milliseconds)
 
 void target_reset()
 {
- //TODO:
+    target_disable_irq();
+    wdt_enable(WDTO_15MS);
+    while (1) {}
 }
 
 void target_panic(int statusCode)
 {
     target_disable_irq();
+    // the methods we use are actually more or less static
+    codal::ATMegaSerial *serial = nullptr;
+    for (int i = 0; i < 10; ++i) {
+        serial->send(" !!! ");
+        serial->send(statusCode);
+    }
+    while (1) {}
 }
