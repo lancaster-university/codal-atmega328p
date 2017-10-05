@@ -319,22 +319,23 @@ restore_register_context:
 ; pop_regs:
 ;--------------------------
 pop_regs:
-    POP r2
-    POP r3
-    POP r4
-    POP r5
-    POP r6
-    POP r7
-    POP r8
-    POP r9
-    POP r10
-    POP r11
-    POP r12
-    POP r13
-    POP r14
-    POP r15
-    POP r16
-    POP r17
-    POP r28
+
     POP r29
+    POP r28
+    POP r17
+    POP r16
+    POP r15
+    POP r14
+    POP r13
+    POP r12
+    POP r11
+    POP r10
+    POP r9
+    POP r8
+    POP r7
+    POP r6
+    POP r5
+    POP r4
+    POP r3
+    POP r2
     RET
