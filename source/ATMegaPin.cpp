@@ -67,7 +67,7 @@ int ATMegaPin::IOREG_IS_SET(volatile uint8_t* const* REG)
   * Pin P0(DEVICE_ID_IO_P0, DEVICE_PIN_P0, PIN_CAPABILITY_ALL);
   * @endcode
   */
-ATMegaPin::ATMegaPin(PinName name, PinCapability capability) : Pin(DEVICE_ID_IO_P0 + name, name, capability)
+ATMegaPin::ATMegaPin(PinNumber name, PinCapability capability) : Pin(DEVICE_ID_IO_P0 + name, name, capability)
 {
     static int portsInitialized = 0;
 
@@ -109,7 +109,7 @@ int ATMegaPin::setDigitalValue(int value)
         return DEVICE_NOT_SUPPORTED;
 
     // Ensure we have a valid value.
-    if (value < 0 || value > 1)
+    if (value < 0)
         return DEVICE_INVALID_PARAMETER;
 
     // Move into a Digital output state if necessary.
@@ -136,7 +136,7 @@ int ATMegaPin::setDigitalValue(int value)
   * @return DEVICE_NOT_SUPPORTED if the current pin configuration is anything other
   *         than a digital input, otherwise DEVICE_OK.
   */
-int ATMegaPin::setPull(PinMode pull)
+int ATMegaPin::setPull(PullMode pull)
 {
     pullMode = pull;
 
@@ -144,13 +144,13 @@ int ATMegaPin::setPull(PinMode pull)
     // otherwise, this will happen automatically when the pin next comes up.
     if (status & IO_STATUS_DIGITAL_IN)
     {
-        if (pullMode == PullUp)
+        if (pullMode == PullMode::Up)
             IOREG_SET(PORT_REG);
         else
             IOREG_CLR(PORT_REG);
     }
 
-    return DEVICE_OK; 
+    return DEVICE_OK;
 }
 
 /**
@@ -177,7 +177,7 @@ int ATMegaPin::getDigitalValue()
         IOREG_CLR(DD_REG);
 
         // If a pullmode has been configured, apply it now.
-        if (pullMode == PullUp)
+        if (pullMode == PullMode::Up)
             IOREG_SET(PORT_REG);
         else
             IOREG_CLR(PORT_REG);
@@ -218,7 +218,7 @@ int ATMegaPin::getAnalogValue()
     while((ADCSRA & (1 << ADIF)) == 0);
     ADCSRA |= (1 << ADIF);
 
-    return (uint16_t)ADCH << 8 | ADCL; 
+    return (uint16_t)ADCH << 8 | ADCL;
 }
 
 /**
@@ -239,7 +239,7 @@ int ATMegaPin::setAnalogValue(int value)
     if(value < 0 || value > DEVICE_PIN_MAX_OUTPUT)
         return DEVICE_INVALID_PARAMETER;
 
-    // TODO: Analogout 
+    // TODO: Analogout
     return DEVICE_NOT_SUPPORTED;
 }
 
@@ -262,7 +262,7 @@ int ATMegaPin::setAnalogPeriodUs(uint32_t period)
             return ret;
     }
 
-    //TODO 
+    //TODO
     return DEVICE_NOT_SUPPORTED;
 }
 

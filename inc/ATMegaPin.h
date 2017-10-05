@@ -76,7 +76,7 @@ namespace codal
              * DevicePin P0(DEVICE_ID_IO_P0, DEVICE_PIN_P0, PIN_CAPABILITY_ALL);
              * @endcode
              */
-            ATMegaPin(PinName name, PinCapability capability);
+            ATMegaPin(PinNumber name, PinCapability capability);
 
             /**
              * Configures this IO pin as a digital output (if necessary) and sets the pin to 'value'.
@@ -157,7 +157,7 @@ namespace codal
              * @return DEVICE_NOT_SUPPORTED if the current pin configuration is anything other
              *         than a digital input, otherwise DEVICE_OK.
              */
-            virtual int setPull(PinMode pull);
+            virtual int setPull(PullMode pull);
     };
 }
 
