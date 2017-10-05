@@ -43,17 +43,17 @@ using namespace codal;
 
 void ATMegaPin::IOREG_SET(volatile uint8_t* const* REG)
 {
-    *(REG[name >> 8]) |= (1 << (name & 0x7));
+    *(REG[name >> 3]) |= (1 << (name & 0x7));
 }
 
 void ATMegaPin::IOREG_CLR(volatile uint8_t* const* REG)
 {
-    *(REG[name >> 8]) &= ~(1 << (name & 0x7));
+    *(REG[name >> 3]) &= ~(1 << (name & 0x7));
 }
 
 int ATMegaPin::IOREG_IS_SET(volatile uint8_t* const* REG)
 {
-    return ((*(REG[name >> 8])) & (1 << (name & 0x7))) ? 1 : 0;
+    return ((*(REG[name >> 3])) & (1 << (name & 0x7))) ? 1 : 0;
 }
 
 /**
