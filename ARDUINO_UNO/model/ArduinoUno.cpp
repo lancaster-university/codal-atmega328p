@@ -27,6 +27,8 @@ DEALINGS IN THE SOFTWARE.
 
 using namespace codal;
 
+void dmesg_flush();
+
 /**
   * Constructor.
   *
@@ -41,6 +43,12 @@ ArduinoUno::ArduinoUno() :
 {
     // Clear our status
     status = 0;
+
+#if CONFIG_ENABLED(DMESG_SERIAL_DEBUG)
+#if DEVICE_DMESG_BUFFER_SIZE > 0
+    codal_dmesg_set_flush_fn(dmesg_flush);
+#endif
+#endif
 
     // Start our system timer running.
     timer.start();
@@ -66,4 +74,21 @@ ArduinoUno::ArduinoUno() :
   */
 void ArduinoUno::onListenerRegisteredEvent(Event evt)
 {
+}
+
+
+void dmesg_flush()
+{
+#if CONFIG_ENABLED(DMESG_SERIAL_DEBUG)
+#if DEVICE_DMESG_BUFFER_SIZE > 0
+    codal::ATMegaSerial* s = NULL;
+    if (codalLogStore.ptr > 0)
+    {
+        for (uint32_t i=0; i<codalLogStore.ptr; i++)
+            s->sendChar(codalLogStore.buffer[i]);
+
+        codalLogStore.ptr = 0;
+    }
+#endif
+#endif
 }

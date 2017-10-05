@@ -32,6 +32,7 @@ DEALINGS IN THE SOFTWARE.
 #include "Matrix4.h"
 #include "CodalCompat.h"
 #include "CodalComponent.h"
+#include "CodalDmesg.h"
 #include "ManagedType.h"
 #include "ManagedString.h"
 #include "Event.h"
@@ -40,7 +41,6 @@ DEALINGS IN THE SOFTWARE.
 #include "CodalFiber.h"
 #include "codal_target_hal.h"
 #include "MessageBus.h"
-#include "device_types.h"
 
 #include "ArduinoIO.h"
 #include "ATMegaTimer.h"
