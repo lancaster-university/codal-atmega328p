@@ -114,8 +114,9 @@ int ATMegaI2C::write(uint8_t data)
 */
 int ATMegaI2C::read()
 {
-    TWCR = (1 << TWINT) | (1 << TWEN);
+    TWCR = (1 << TWEA) | (1 << TWINT) | (1 << TWEN);
     while (!TWI_DONE);
+
     return TWDR;
 }
 
@@ -225,7 +226,7 @@ int ATMegaI2C::read(uint16_t address, uint8_t *data, int len)
     // Send a start condition
     start();
 
-    // Send the address of the slave, with a write bit set.
+    // Send the address of the slave, with a read bit set.
     write((uint8_t)(address | 0x01));
 
     // Read the body of the data
