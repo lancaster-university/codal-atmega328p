@@ -45,6 +45,7 @@ DEALINGS IN THE SOFTWARE.
 #include "ArduinoIO.h"
 #include "ATMegaTimer.h"
 #include "ATMegaSerial.h"
+#include "ATMegaI2C.h"
 
 namespace codal
 {
@@ -73,6 +74,7 @@ namespace codal
         ATMegaTimer                 timer;
         ATMegaSerial                serial;
         ArduinoIO                   io;
+        ATMegaI2C                   i2c;
         MessageBus                  messageBus;
 
         /**

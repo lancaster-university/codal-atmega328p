@@ -39,6 +39,7 @@ ArduinoUno::ArduinoUno() :
     timer(),
     serial(),
     io(),
+    i2c(io.A4, io.A5),
     messageBus()
 {
     // Clear our status
