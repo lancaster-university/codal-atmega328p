@@ -7,11 +7,13 @@ include("${CODAL_UTILS_LOCATION}")
 RECURSIVE_FIND_DIR(TOP_LEVEL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/inc" "*.h")
 RECURSIVE_FIND_FILE(TOP_LEVEL_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/source" "*.c??")
 
+list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/asm/AVRContextSwitch.S")
+
 # add them
 include_directories(${TOP_LEVEL_INCLUDE_DIRS})
 
 # create our target
-add_library(codal-atmega328p ${TOP_LEVEL_SOURCE_FILES})
+add_library(codal-atmega328p ${SOURCE_FILES} ${TOP_LEVEL_SOURCE_FILES})
 
 target_link_libraries(
     codal-atmega328p
