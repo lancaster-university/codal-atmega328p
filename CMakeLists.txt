@@ -4,24 +4,14 @@ enable_language(ASM)
 include("${CODAL_UTILS_LOCATION}")
 
 # find sources and headers
-RECURSIVE_FIND_DIR(INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${CODAL_OUTPUT_NAME}" "*.h")
-RECURSIVE_FIND_FILE(SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${CODAL_OUTPUT_NAME}" "*.c??")
-
 RECURSIVE_FIND_DIR(TOP_LEVEL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/inc" "*.h")
 RECURSIVE_FIND_FILE(TOP_LEVEL_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/source" "*.c??")
 
-SET(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -T\"${CMAKE_CURRENT_LIST_DIR}/ld/${CODAL_OUTPUT_NAME}.xn\"" PARENT_SCOPE)
-set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} -T\"${CMAKE_CURRENT_LIST_DIR}/ld/${CODAL_OUTPUT_NAME}.xn\"" PARENT_SCOPE)
-
-list(APPEND SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/asm/AVRContextSwitch.S")
-
-string(TOLOWER "${CODAL_TARGET_PROCESSOR}" TARGET_PROCESSOR)
-
 # add them
-include_directories(${INCLUDE_DIRS} ${TOP_LEVEL_INCLUDE_DIRS})
+include_directories(${TOP_LEVEL_INCLUDE_DIRS})
 
 # create our target
-add_library(codal-atmega328p ${SOURCE_FILES} ${TOP_LEVEL_SOURCE_FILES})
+add_library(codal-atmega328p ${TOP_LEVEL_SOURCE_FILES})
 
 target_link_libraries(
     codal-atmega328p
@@ -29,4 +19,4 @@ target_link_libraries(
 )
 
 # expose it to parent cmake.
-target_include_directories(codal-atmega328p PUBLIC ${INCLUDE_DIRS} ${TOP_LEVEL_INCLUDE_DIRS})
+target_include_directories(codal-atmega328p PUBLIC ${TOP_LEVEL_INCLUDE_DIRS})
