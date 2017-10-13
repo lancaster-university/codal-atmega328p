@@ -2,7 +2,6 @@
 .global save_context
 .global save_register_context
 .global restore_register_context
-.global modify_ret
 
 #include <avr/io.h>
 
@@ -17,8 +16,246 @@
 #define SPHI    62
 #define SR      63
 
+;
+; USE r18-r27 and r30-r31 without save/restoring
+;
+
 ;--------------------------
-; save_context
+; save_register_context
+;
+; pushes our call saved regs and simply saves the stack pointer
+;
+; ARGS:
+;       * Pointer to the Fibers' TCB (r24, r25)
+;--------------------------
+_save_register_context:
+	MOV		ZL, r24				; Point Z register at TCB
+	MOV		ZH, r25
+
+	ADIW	Z,	2				; Skip to register values
+
+	ST		Z+,	R0				; Store register context
+	ST		Z+,	R1
+	ST		Z+,	R2
+	ST		Z+,	R3
+	ST		Z+,	R4
+	ST		Z+,	R5
+	ST		Z+,	R6
+	ST		Z+,	R7
+	ST		Z+,	R8
+	ST		Z+,	R9
+	ST		Z+,	R10
+	ST		Z+,	R11
+	ST		Z+,	R12
+	ST		Z+,	R13
+	ST		Z+,	R14
+	ST		Z+,	R15
+	ST		Z+,	R16
+	ST		Z+,	R17
+	ST		Z+,	R18				; Optional - param list
+	ST		Z+,	R19				; Optional - param list
+	ST		Z+,	R20				; Optional - param list
+	ST		Z+,	R21				; Optional - param list
+	ST		Z+,	R22				; Optional - param list
+	ST		Z+,	R23				; Optional - param list
+	ST		Z+,	R24				; Optional - param list
+	ST		Z+,	R25				; Optional - param list
+	ST		Z+,	R28
+	ST		Z+,	R29
+
+	IN		XL, SPLO			; Point X register at stack
+	IN		XH, SPHI
+
+	ADIW	X, 4				; rewind past the call of the context switcher to get the return address.
+
+	ST		Z+, XL				; store the Stack Pointer
+	ST		Z+, XH
+
+						
+	LD		R1, X				
+	ST		Z+, R1
+
+	LD		R1, -X				
+	ST		Z+, R1
+
+	CLR		R1					; Restore register
+
+	RET
+
+;--------------------------
+; restore_register_context
+;
+; simply restores the stack pointer in the case of the AVR
+;
+; ARGS:
+;       * Pointer to the Fibers' TCB (r24, r25)
+;--------------------------
+_restore_register_context:
+	MOV		ZL, r24				; Point Z register at TCB
+	MOV		ZH, r25
+	
+	ADIW	Z, 30				; Skip to SP
+	LD		XL, Z+
+	LD		XH, Z+
+
+	SBIW	Z, 32				; Skip back to STACK_BASE
+	LD		YL, Z+
+	LD		YH, Z+
+
+	SUB		YL, XL				; If a stack is present, rewind stack pointer by 2 bytes so we can rewrite the return address
+	SUB		YH, XH
+
+	ADIW	Y, 0				; Zero test
+	BREQ	RESTORE_REGISTERS	; If no stack is present, don't rewind the Stack Pointer.
+
+RESTORE_REGISTERS:
+	LD		R0, Z+				; Restore register context
+	LD		R1, Z+
+	LD		R2, Z+
+	LD		R3, Z+
+	LD		R4, Z+
+	LD		R5, Z+
+	LD		R6, Z+
+	LD		R7, Z+
+	LD		R8, Z+
+	LD		R9, Z+
+	LD		R10, Z+
+	LD		R11, Z+
+	LD		R12, Z+
+	LD		R13, Z+
+	LD		R14, Z+
+	LD		R15, Z+
+	LD		R16, Z+
+	LD		R17, Z+
+	LD		R18, Z+
+	LD		R19, Z+
+	LD		R20, Z+
+	LD		R21, Z+
+	LD		R22, Z+
+	LD		R23, Z+
+	LD		R24, Z+
+	LD		R25, Z+
+	LD		R28, Z+
+	LD		R29, Z+
+
+	OUT		SPLO, XL
+	OUT		SPHI, XH
+
+	ADIW	Z, 2				; Skip to LR
+	LD		XL, Z+				; Load the LR (return address)
+	LD		XH, Z+
+
+	PUSH	XL
+	PUSH	XH
+
+	RET							; Leap into the code stored in the LR field code.
+
+;--------------------------
+; save_stack_context
+;
+; Snapshot the entire stack, and store it int he location specified.
+;
+; ARGS:
+;       * Pointer to the Fibers' TCB (r24, r25)
+;       * Pointer to where the stack should be saved (r22, r23)
+;--------------------------
+_save_stack_context:
+	PUSH	YL
+	PUSH	YH
+
+	MOV		ZL, r24				; Point Z register at TCB
+	MOV		ZH, r25
+
+	LD		YL, Z+				; Point X register at the STACK_BASE
+	LD		YH, Z+
+	ADIW	Y, 1				; AVR loops pre-decrement, so offset here.
+	MOVW	X, Y				; Snapshot STACK_BASE pointer for later.
+
+	IN		R1, SPLO
+	SUB		YL, R1				; 16 bit Y = STACKBASE - STACK.
+
+	BRCC	STORE_CARRY_COMPLETE
+	DEC		YH
+STORE_CARRY_COMPLETE:
+	IN		R1, SPHI
+	SUB		YH, R1
+
+	SBIW	Y, 5				; Ignore last 4 bytes (one internal subroutine calls, and the YL/YH PUSH), and one more because the stackpointer is one byte ahead of the data
+
+	MOV		ZL, r22				; Point Z register at memory region to write to
+	MOV		ZH, r23
+
+STORE_STACK_BYTE:	
+	LD		R1, -X
+	ST		-Z, R1
+	SBIW	Y, 1
+	BRNE	STORE_STACK_BYTE
+
+	CLR		R1
+	POP		YH
+	POP		YL
+
+	RET
+
+
+;--------------------------
+; restore_stack_context
+;
+; Saves the entire stack of the old fiber to RAM, and pages in another fibers
+; stack.
+;
+; ARGS:
+;       * Pointer to the Fibers' TCB (r24, r25)
+;       * Pointer to where the stack is saved (r22, r23)
+;--------------------------
+_restore_stack_context:
+
+	POP		R20					; Extract our return address - we'll need it later.
+	POP		R21
+
+	MOV		ZL, r24				; Point Z register at TCB
+	MOV		ZH, r25
+
+	LD		XL, Z+				; Point X register at the STACK_BASE
+	LD		XH, Z+
+
+	OUT		SPLO, XL			; Update stack pointer whilst we're here to STACK_BASE.
+	OUT		SPHI, XH
+
+	ADIW	Z, 28				; Move to stored stack pointer in TCB
+	LD		R1, Z+
+
+	SUB		XL, R1				; 16 bit X = STACKBASE - STACK.
+	BRCC	RESTORE_CARRY_COMPLETE
+	DEC		XH
+
+RESTORE_CARRY_COMPLETE:
+	LD		R1, Z+
+	SUB		XH, R1						
+	
+	ADIW	X, 0						; Zero test. 
+	BREQ	RESTORE_STACK_COMPLETE		; Ensure there is a stack to restore (a new fiber may not have one).
+
+	MOV		ZL, r22				; Point Z register at stack image to restore
+	MOV		ZH, r23
+
+RESTORE_STACK_BYTE:	
+	LD		R1, -Z
+	PUSH	R1
+
+	SBIW	X, 1
+	BRNE	RESTORE_STACK_BYTE
+
+RESTORE_STACK_COMPLETE:
+	CLR		R1
+	PUSH	R21
+	PUSH	R20
+
+	RET
+
+
+;--------------------------
+; swap_context
 ;
 ; Saves the entire stack of the old fiber to RAM, and pages in another fibers
 ; stack.
@@ -30,221 +267,26 @@
 ;       * Pointer to the where the new Fibers' stack is saved (r18, r19)
 ;--------------------------
 swap_context:
-; we can't really factor this out without pushing registers of another stack frame...
-; this repetitive code is a lot simpler
-    PUSH r2
-    PUSH r3
-    PUSH r4
-    PUSH r5
-    PUSH r6
-    PUSH r7
-    PUSH r8
-    PUSH r9
-    PUSH r10
-    PUSH r11
-    PUSH r12
-    PUSH r13
-    PUSH r14
-    PUSH r15
-    PUSH r16
-    PUSH r17
-    PUSH r28
-    PUSH r29
+	TST		r24
+	BRNE	SAVE_FIBER_CONTEXT
+	TST		r25
+	BREQ	RESTORE_FIBER
 
-; validation check
-    CPI r20, 0
-    BRNE swap_context_cont
-    CPI r21, 0
-    BREQ restore_stack
+SAVE_FIBER_CONTEXT:
+	CALL	_save_stack_context
+	CALL	_save_register_context
 
-swap_context_cont:
-; load our old fibers RAM stack pointer (args r21, r20)
-    MOV ZL, r20
-    MOV ZH, r21
+RESTORE_FIBER:
+	MOV		R25, R21
+	MOV		R24, R20
+	MOV		R23, R19
+	MOV		R22, R18
 
-    LDI YL, lo8(RAMEND)
-    LDI YH, hi8(RAMEND)
+	CALL	_restore_stack_context
+	CALL	_restore_register_context
 
-; pre load our terminating condition into r15, and r16
-store_stack_pointer:
-    IN r15, SPLO
-    IN r16, SPHI
+	RET
 
-    MOV XL, r24
-    MOV XH, r25
-
-;STORE SPLO AND HI into OUR TCB
-    ST X+, r15
-    ST X+, r16
-
-    JMP store_stack_validation
-
-; iterate until Y == SP
-store_stack:
-    LD r17, -Y
-    ST -Z, r17
-
-store_stack_validation:
-    CP YL, r15
-    BRNE store_stack
-    CP YH, r16
-    BRNE store_stack
-
-restore_stack:
-; validation check
-    CPI r18, 0
-    BRNE restore_stack_pointer
-    CPI r19, 0
-    BREQ check_lr
-
-restore_stack_pointer:
-;NEED TO ADD NULL CHECKS
-    MOV XL, r22
-    MOV XH, r23
-
-    LD r16, X+
-    LD r17, X+
-
-    OUT SPLO, r16
-    OUT SPHI, r17
-
-    MOV r15, r16
-    MOV r16, r17
-
-restore_stack_cont:
-; load our new fibers RAM stack pointer (args r19, r18)
-    MOV ZL, r18
-    MOV ZH, r19
-
-    LDI YL, lo8(RAMEND)
-    LDI YH, hi8(RAMEND)
-
-    JMP restore_stack_validation
-
-restore_stack_loop:
-    LD r17, -Z
-    ST -Y, r17
-
-restore_stack_validation:
-    CP YL, r15
-    BRNE restore_stack_loop
-    CP YH, r16
-    BRNE restore_stack_loop
-
-; check if our faux LR is set, and modify the stack frame return address if required.
-check_lr:
-    MOV XL, r22
-    MOV XH, r23
-    ADIW XL, 2
-
-; low 8 bits, and reset to 0
-    LD r16, X
-    ST X+, r1
-; upper 8 bits, and reset to 0
-    LD r17, X
-    ST X+, r1
-
-; check if we have some semblence of an address in LR...
-    CLZ
-    CPI r16, 0
-    BRNE restore_lr
-    CLZ
-    CPI r17, 0
-    BRNE restore_lr
-
-; we have no address, skip...
-    JMP restore_stack_complete
-
-; modify the return point of our stack frame...
-restore_lr:
-    IN ZL, SPLO
-    IN ZH, SPHI
-
-    ADIW ZL, 2
-
-    ST Z, r16
-    ST -Z, r17
-
-; set our args from the TCB.
-set_args:
-    LD r20, X+
-    LD r21, X+
-    LD r22, X+
-    LD r23, X+
-    LD r24, X+
-    LD r25, X+
-
-    RET
-
-restore_stack_complete:
-; finished, pop our clogs
-    JMP pop_regs
-
-
-;--------------------------
-; save_context
-;
-; Saves the entire stack, and copies it to RAM.
-;
-; ARGS:
-;       * Pointer to the Fibers' TCB (r24, r25)
-;       * Pointer to where the stack should be saved (r22, r23)
-;--------------------------
-save_context:
-; we can't really factor this out without pushing registers of another stack frame...
-; this repetitive code is a lot simpler
-    PUSH r2
-    PUSH r3
-    PUSH r4
-    PUSH r5
-    PUSH r6
-    PUSH r7
-    PUSH r8
-    PUSH r9
-    PUSH r10
-    PUSH r11
-    PUSH r12
-    PUSH r13
-    PUSH r14
-    PUSH r15
-    PUSH r16
-    PUSH r17
-    PUSH r28
-    PUSH r29
-
-; load our fibers RAM stack pointer (args r22, r23)
-    MOV ZL, r22
-    MOV ZH, r23
-
-    LDI YL, lo8(RAMEND)
-    LDI YH, hi8(RAMEND)
-
-; pre load our terminating condition into r15, and r16
-save_stack_pointer:
-    IN r15, SPLO
-    IN r16, SPHI
-
-    MOV XL, r24
-    MOV XH, r25
-
-;STORE SPLO AND HI into OUR TCB
-    ST X+, r15
-    ST X+, r16
-
-    JMP save_stack_validation
-
-; iterate until Y == SP
-save_stack:
-    LD r17, -Y
-    ST -Z, r17
-
-save_stack_validation:
-    CP YL, r15
-    BRNE save_stack
-    CP YH, r16
-    BRNE save_stack
-
-    RET
 
 ;--------------------------
 ; save_register_context
@@ -255,39 +297,8 @@ save_stack_validation:
 ;       * Pointer to the Fibers' TCB (r24, r25)
 ;--------------------------
 save_register_context:
-; we can't really factor this out without pushing registers of another stack frame...
-; this repetitive code is a lot simpler
-    PUSH r2
-    PUSH r3
-    PUSH r4
-    PUSH r5
-    PUSH r6
-    PUSH r7
-    PUSH r8
-    PUSH r9
-    PUSH r10
-    PUSH r11
-    PUSH r12
-    PUSH r13
-    PUSH r14
-    PUSH r15
-    PUSH r16
-    PUSH r17
-    PUSH r28
-    PUSH r29
-
-    IN r18, SPLO
-    IN r19, SPHI
-
-    MOV XL, r24
-    MOV XH, r25
-
-; STORE SPLO AND HI into OUR TCB
-    ST X+, r18
-    ST X+, r19
-
-; finished, pop our clogs
-    JMP pop_regs
+	CALL	_save_register_context
+	RET
 
 ;--------------------------
 ; restore_register_context
@@ -298,44 +309,20 @@ save_register_context:
 ;       * Pointer to the Fibers' TCB (r24, r25)
 ;--------------------------
 restore_register_context:
-
-;NEED TO ADD NULL CHECKS
-    IN r18, SPLO
-    IN r19, SPHI
-
-    MOV XL, r24
-    MOV XH, r25
-
-    LD r18, X+
-    LD r19, X+
-
-    OUT SPLO, r18
-    OUT SPHI, r19
-
-; finished, pop our clogs
-    JMP pop_regs
+	CALL	_restore_register_context
+	RET
 
 ;--------------------------
-; pop_regs:
+; save_context
+;
+; pushes our call saved regs and simply saves the stack pointer
+;
+; ARGS:
+;       * Pointer to the Fibers' TCB (r24, r25)
+;       * Pointer to where the stack should be saved (r22, r23)
 ;--------------------------
-pop_regs:
+save_context:
+	CALL	_save_stack_context
+	CALL	_save_register_context
+	RET
 
-    POP r29
-    POP r28
-    POP r17
-    POP r16
-    POP r15
-    POP r14
-    POP r13
-    POP r12
-    POP r11
-    POP r10
-    POP r9
-    POP r8
-    POP r7
-    POP r6
-    POP r5
-    POP r4
-    POP r3
-    POP r2
-    RET
