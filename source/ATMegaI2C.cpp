@@ -44,6 +44,7 @@ namespace codal
   */
 ATMegaI2C::ATMegaI2C(ATMegaPin &sda, ATMegaPin &scl) : I2C(sda, scl)
 {
+    setFrequency(100000);
 }
 
 /** Set the frequency of the I2C interface

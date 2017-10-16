@@ -35,9 +35,10 @@ namespace codal
 /**
   * Class definition for ATMega I2C device.
   */
-class ATMegaI2C : I2C
+class ATMegaI2C : public I2C
 {
 public:
+
     ATMegaI2C(ATMegaPin &sda, ATMegaPin &scl);
 
     /** Set the frequency of the I2C interface
@@ -64,6 +65,7 @@ public:
       * @param data The byte to write.
       * @return DEVICE_OK on success, DEVICE_I2C_ERROR if the the write request failed.
       */
+    using I2C::write;
     virtual int write(uint8_t data);
 
     /**
@@ -72,6 +74,7 @@ public:
     *
     * @return the byte read from the I2C bus, or DEVICE_I2C_ERROR if the the write request failed.
     */
+    using I2C::read;
     virtual int read();
 
 };
