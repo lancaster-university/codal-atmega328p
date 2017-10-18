@@ -75,7 +75,7 @@ public:
     * @return the byte read from the I2C bus, or DEVICE_I2C_ERROR if the the write request failed.
     */
     using I2C::read;
-    virtual int read();
+    virtual int read(AcknowledgeType ack = ACK);
 
 };
 }

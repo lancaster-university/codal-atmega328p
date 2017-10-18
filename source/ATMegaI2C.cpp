@@ -113,9 +113,13 @@ int ATMegaI2C::write(uint8_t data)
 *
 * @return the byte read from the I2C bus, or DEVICE_I2C_ERROR if the the write request failed.
 */
-int ATMegaI2C::read()
+int ATMegaI2C::read(AcknowledgeType ack)
 {
-    TWCR = (1 << TWEA) | (1 << TWINT) | (1 << TWEN);
+    if (ack == ACK)
+        TWCR = (1 << TWEA) | (1 << TWINT) | (1 << TWEN);
+    else
+        TWCR = (1 << TWINT) | (1 << TWEN);
+
     while (!TWI_DONE);
 
     return TWDR;
