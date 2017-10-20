@@ -1,8 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016 British Broadcasting Corporation.
-This software is provided by Lancaster University by arrangement with the BBC.
+Copyright (c) 2017 Lancaster University.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -58,10 +57,10 @@ ATMegaSerial::ATMegaSerial()
  */
 int ATMegaSerial::sendChar(char c)
 {
-    // Wait for empty transmit buffer 
+    // Wait for empty transmit buffer
     while (!( UCSR0A & 0x20));
 
-    // Put data into buffer, sends the data 
+    // Put data into buffer, sends the data
     UDR0 = c;
 
     return DEVICE_OK;
@@ -98,7 +97,7 @@ int ATMegaSerial::send(const uint16_t n)
 {
     int sh = 12;
 
-    send("0x"); 
+    send("0x");
     while (sh >= 0)
     {
         int d = (n >> sh) & 0xf;
