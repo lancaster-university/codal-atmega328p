@@ -26,7 +26,7 @@ DEALINGS IN THE SOFTWARE.
 #define ATMEGA_I2C_H
 
 #include "CodalConfig.h"
-#include "codal-core/inc/drivers/I2C.h"
+#include "codal-core/inc/driver-models/I2C.h"
 #include "ATMegaPin.h"
 
 namespace codal
